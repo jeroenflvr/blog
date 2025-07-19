@@ -15,6 +15,7 @@
 
 ```rust
 fn main() -> Result<()>{
-    println!("awesome!");
+    println!("Awesome, you're here! Welcome.");
+    Ok(())
 }
 ```
