@@ -1,0 +1,112 @@
+---
+.title = "In-Process Reverse Proxy",
+.date = @date("2025-07-19T00:00:00"),
+.author = "Jeroen",
+.layout = "post.shtml",
+.draft = false,
+--- 
+
+# Building High-Performance Object Storage Proxies with Cloudflare's [Pingora](https://github.com/cloudflare/pingora)
+
+When [Cloudflare open-sourced Pingora in 2024](https://blog.cloudflare.com/pingora-open-source/), they didn't just release another reverse proxy framework—they shared the battle-tested foundation that handles over 1 trillion requests per day. After building an in-process reverse proxy for AWS S3 and cloud object storage using Pingora with a Python interface, I've gained deep insights into why this framework represents a significant leap forward in proxy architecture.
+
+## What Makes Pingora Different
+
+Pingora breaks away from the traditional process-per-request model that has dominated web servers for decades. Unlike nginx's multi-process architecture, Pingora is built from the ground up in Rust with async I/O at its core, delivering both memory safety and exceptional performance.
+
+### The Architecture Advantage
+
+While nginx spawns worker processes that communicate through shared memory, Pingora runs as a single process with multiple async tasks. This fundamental difference eliminates the overhead of inter-process communication and allows for more efficient resource sharing. The result? Lower memory usage, reduced context switching, and significantly better performance under high load.
+
+## Understanding the Pingora Request Lifecycle
+
+Pingora's power lies in its well-defined request processing pipeline. Each request flows through specific stages, each offering hooks where you can inject custom logic:
+
+### 1. **`upstream_peer`** - Target Selection
+The first stage determines where the request should be routed. This is where you implement load balancing logic, health checking, and backend selection. In our object storage proxy, this stage selects the appropriate S3-compatible backend based on the requested bucket.
+
+### 2. **`request_filter`** - Incoming Request Processing  
+This stage processes the incoming client request before it's forwarded upstream. Here's where authentication and authorization happen. Our implementation validates tokens, checks permissions, and prepares the request context.
+
+### 3. **`upstream_request_filter`** - Upstream Request Modification
+Before sending the request to the backend, this stage allows you to modify headers, sign requests, or add authentication. This is where we inject AWS signatures and transform client credentials into backend-specific authentication.
+
+### 4. **`request_body_filter`** - Request Body Processing
+For requests with bodies (PUT, POST), this stage processes chunks of the request body as they stream through the proxy. Our validation logic runs on the first chunks to ensure early failure for unauthorized requests.
+
+### 5. **`response_filter`** - Response Processing
+Finally, this stage processes the response before sending it back to the client. You can modify headers, implement caching logic, or add observability data.
+
+## Performance: Pingora vs nginx
+
+The performance benefits of Pingora become evident under real-world conditions. In our benchmarks, we observed up to 40% lower p99 latency compared to traditional nginx-based solutions. This improvement stems from several factors:
+
+**Memory Efficiency**: Pingora's single-process architecture with shared state eliminates the memory duplication inherent in nginx's multi-process model. Our custom secrets cache, implemented as `Arc<RwLock<HashMap<String, SecretValue>>>`, can be shared across all requests without the complexity of inter-process synchronization.
+
+**Zero-Copy Operations**: Rust's ownership model enables efficient memory management with minimal copying. Data can flow from backend to client with fewer intermediate buffers.
+
+**Async All the Way**: Unlike nginx's hybrid approach, Pingora is async from the ground up. This means no blocking operations can stall other requests, leading to more predictable performance under load.
+
+**Connection Reuse**: Pingora's connection pooling is more sophisticated, maintaining persistent connections to backends more efficiently than nginx's upstream modules.
+
+## Safety: The Rust Advantage
+
+Beyond performance, Pingora brings memory safety guarantees that are simply impossible with C-based proxies like nginx:
+
+**No Segmentation Faults**: Rust's borrow checker prevents the buffer overflows and use-after-free bugs that have plagued nginx modules for years.
+
+**Fearless Concurrency**: Rust's ownership model makes it impossible to have data races, eliminating an entire class of concurrency bugs that can cause unpredictable behavior in high-traffic proxies.
+
+**Resource Safety**: Automatic memory management without garbage collection overhead means predictable resource usage under all conditions.
+
+## Bridging Rust and Python with PyO3
+
+One of the most powerful aspects of our implementation is the Python interface built with PyO3. This allows users with minimal Rust knowledge to configure and extend the proxy using familiar Python:
+
+```python
+def do_validation(token: str, bucket: str) -> bool:
+    # Custom authorization logic in Python
+    return check_permissions(token, bucket)
+
+def fetch_credentials(token: str, bucket: str) -> str:
+    # Dynamic credential fetching
+    return get_backend_credentials(token, bucket)
+```
+
+The PyO3 bridge handles the complexity of calling Python functions from async Rust code, managing the GIL (Global Interpreter Lock) efficiently to minimize performance impact.
+
+## Custom Caching Implementation
+
+Rather than relying on external caching solutions, our implementation uses a custom `SecretsCache` that integrates seamlessly with Pingora's async model:
+
+```rust
+pub struct SecretsCache {
+    inner: Arc<RwLock<HashMap<String, SecretValue>>>,
+}
+```
+
+This cache handles TTL expiration, automatic renewal, and thread-safe access patterns. By implementing caching in-process, we eliminate network round-trips that would be required with external cache solutions like Redis.
+
+## Real-World Benefits
+
+The combination of Pingora's architecture and our implementation delivers practical benefits:
+
+**Single Network Endpoint**: Clients only connect to the proxy, never directly to object storage backends, simplifying security and network policies.
+
+**Identity-Aware Access**: The proxy accepts whatever authentication your users already have—OIDC, SAML, JWT, mTLS—and translates it to backend-specific credentials.
+
+**Policy Enforcement**: Authorization rules are evaluated at wire-speed in the same process, not in scattered application code or external services.
+
+**Vendor Abstraction**: Switch between S3, Google Cloud Storage, IBM COS, or MinIO without changing client code.
+
+## The Future of Proxy Architecture
+
+Pingora represents more than just another proxy framework—it's a paradigm shift toward safer, more efficient proxy architecture. The combination of Rust's safety guarantees, async performance, and extensible design makes it an ideal choice for building the next generation of network infrastructure.
+
+For developers building high-performance, security-critical proxies, Pingora offers a compelling alternative to traditional solutions. The learning curve is worth it: you gain memory safety, better performance, and a more maintainable codebase.
+
+Whether you're building API gateways, load balancers, or specialized proxies like our object storage solution, Pingora provides the foundation for infrastructure that can scale to handle internet-scale traffic while maintaining the safety and reliability your applications demand.
+
+---
+
+*The object storage proxy described in this post is available [here](https://osp.flexworks.eu). You can find the full documentation and examples at [osp-docs.flexworks.eu](https://osp-docs.flexworks.eu/home/).*

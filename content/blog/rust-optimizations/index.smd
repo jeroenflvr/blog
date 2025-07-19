@@ -1,6 +1,6 @@
 ---
 .title = "Rust Optimizations",
-.date = @date("2025-07-20T00:00:00"),
+.date = @date("2025-06-13T00:00:00"),
 .author = "Jeroen",
 .layout = "post.shtml",
 .draft = false,
@@ -8,11 +8,11 @@
 
 # Squeezing Every Nanosecond: Optimizing Branch Prediction and Cache Performance in Rust
 
-When building high-performance systems in Rust, understanding how your code interacts with modern CPU architectures can mean the difference between "fast enough" and "blazingly fast." Two of the most critical factors affecting performance are branch prediction and cache behavior—areas where even small optimizations can yield significant speedups.
+When building high-performance systems in Rust, understanding how the code interacts with modern CPU architectures can mean the difference between "fast enough" and "blazingly fast." Two of the most critical factors affecting performance are branch prediction and cache behavior—areas where even small optimizations can yield significant speedups.
 
-Modern CPUs are marvels of engineering, executing billions of instructions per second through sophisticated techniques like speculative execution, out-of-order processing, and multi-level caching. However, these optimizations come with a caveat: they work best when your code follows predictable patterns that the hardware can anticipate.
+Modern CPUs are marvels of engineering, executing billions of instructions per second through sophisticated techniques like speculative execution, out-of-order processing, and multi-level caching. However, these optimizations come with a caveat: they work best when the code follows predictable patterns that the hardware can anticipate.
 
-In this deep dive, we'll explore how to write Rust code that works harmoniously with your CPU's branch predictor and cache hierarchy. We'll cover practical techniques, provide real benchmarks, and show you how to measure the impact of your optimizations.
+In this deep dive, we'll explore how to write Rust code that works harmoniously with the CPU's branch predictor and cache hierarchy. We'll cover practical techniques, provide real benchmarks, and show you how to measure the impact of the optimizations.
 
 ## Understanding the Hardware: Why This Matters
 
@@ -20,7 +20,7 @@ Before diving into techniques, let's establish why branch prediction and cache p
 
 **Branch Prediction**: Modern CPUs speculatively execute instructions before knowing if a branch will be taken. When the prediction is wrong, the CPU must discard work and restart—a costly operation that can stall execution for dozens of cycles.
 
-**Cache Performance**: Memory access patterns determine whether your data lives in fast CPU caches (L1/L2/L3) or slow main memory. Cache misses can be 100-300x slower than cache hits, making memory layout optimization critical for performance.
+**Cache Performance**: Memory access patterns determine whether the data lives in fast CPU caches (L1/L2/L3) or slow main memory. Cache misses can be 100-300x slower than cache hits, making memory layout optimization critical for performance.
 
 ## Branch Prediction Optimization
 
@@ -99,7 +99,7 @@ fn process_mixed_data_good(data: &[i32]) -> (i32, i32) {
 
 ### Structure of Arrays vs Array of Structures
 
-One of the most impactful optimizations involves reorganizing your data layout:
+One of the most impactful optimizations involves reorganizing the data layout:
 
 ```rust
 // Array of Structures (AoS) - poor cache locality
@@ -198,7 +198,7 @@ fn sum_columns_good(matrix: &[Vec<f32>]) -> Vec<f32> {
 
 ### Setting Up Benchmarks
 
-Here's how to measure the impact of your optimizations using the `criterion` crate:
+Here's how to measure the impact of the optimizations using the `criterion` crate:
 
 ```rust
 // Cargo.toml
@@ -306,7 +306,7 @@ perf report
 
 ### Interpreting Results
 
-Here's what to look for in your profiling results:
+Here's what to look for in the profiling results:
 
 - **Branch miss rate**: Should be under 5% for well-optimized code
 - **Cache miss rate**: Varies by workload, but under 10% is generally good
