@@ -83,3 +83,13 @@ footer {
 footer hr {
   width: 100%;
 }
+
+.warning {
+  border-color: #CCCC49 !important;
+}
+
+.warning h1 {
+  border-color: #CCCC49 !important;
+  background-color: #CCCC49 !important;
+  color: #111 !important;
+}

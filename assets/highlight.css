@@ -9,6 +9,62 @@
   --magenta: #c678dd;
 }
 
+code .comment {
+  color: var(--comment-gray);
+}
+
+
+code.html {
+
+}
+
+code.html .string {
+  color: var(--dark-yellow);
+}
+
+code.html .tag {
+  color: var(--blue);
+}
+
+code.html .constant {
+  color: var(--light-red);
+}
+
+code.html .attribute {
+  color: var(--light-yellow);
+}
+
+code.html .punctuation {
+  color: var(--cyan);
+}
+
+code.superhtml {}
+
+code.superhtml .string {
+  color: var(--dark-yellow);
+}
+
+code.superhtml .tag {
+  color: var(--blue);
+}
+
+code.superhtml .special {
+  color: var(--blue);
+}
+
+code.superhtml .constant {
+  color: var(--light-red);
+}
+
+code.superhtml .attribute {
+  color: var(--light-yellow);
+}
+
+code.superhtml .punctuation {
+  color: var(--cyan);
+}
+
+
 pre {
   border-top: 1px solid white;
   border-bottom: 1px solid white;
@@ -79,4 +135,95 @@ code.rust .lifetime {
 
 code.rust .operator {
   color: var(--white);
+}
+
+code.python {
+  color: var(--cyan);
+}
+
+code.python .keyword,
+code.python .type {
+  color: var(--light-yellow);
+}
+
+code.python .string {
+  color: var(--dark-yellow);
+}
+
+code.python .numeric.constant,
+code.python .number {
+  color: var(--magenta);
+}
+
+code.python .function {
+  color: var(--blue);
+}
+
+/* Additional Python-specific elements */
+code.python .decorator {
+  color: var(--magenta);
+}
+
+code.python .builtin {
+  color: var(--cyan);
+}
+
+code.python .comment {
+  color: var(--gray);
+  font-style: italic;
+}
+
+code.python .docstring {
+  color: var(--dark-yellow);
+  font-style: italic;
+}
+
+code.python .operator {
+  color: var(--white);
+}
+
+code.python .self,
+code.python .cls {
+  color: var(--orange);
+}
+
+code.python .exception {
+  color: var(--orange);
+}
+
+
+
+code.c {
+  color: var(--magent);
+}
+
+code.c .string {
+  color: var(--dark-yellow);
+}
+
+code.c .variable,
+code.c .field {
+  color: var(--light-yellow);
+}
+
+code.c .keyword.function {
+  color: var(--light-red);
+}
+
+code.c .bracket {
+  color: var(--cyan);
+}
+
+code.c .function {
+  color: var(--blue);
+}
+
+code.c .builtin {
+  color: var(--magenta);
+}
+
+code.c .operator,
+code.c .qualifier,
+code.c .attribute {
+  color: var(--light-red);
 }

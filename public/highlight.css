@@ -80,3 +80,57 @@ code.rust .lifetime {
 code.rust .operator {
   color: var(--white);
 }
+
+code.python {
+  color: var(--cyan);
+}
+
+code.python .keyword,
+code.python .type {
+  color: var(--light-yellow);
+}
+
+code.python .string {
+  color: var(--dark-yellow);
+}
+
+code.python .numeric.constant,
+code.python .number {
+  color: var(--magenta);
+}
+
+code.python .function {
+  color: var(--blue);
+}
+
+/* Additional Python-specific elements */
+code.python .decorator {
+  color: var(--magenta);
+}
+
+code.python .builtin {
+  color: var(--cyan);
+}
+
+code.python .comment {
+  color: var(--gray);
+  font-style: italic;
+}
+
+code.python .docstring {
+  color: var(--dark-yellow);
+  font-style: italic;
+}
+
+code.python .operator {
+  color: var(--white);
+}
+
+code.python .self,
+code.python .cls {
+  color: var(--orange);
+}
+
+code.python .exception {
+  color: var(--orange);
+}
