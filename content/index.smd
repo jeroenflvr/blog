@@ -1,0 +1,16 @@
+---
+.title = "The Silent Shift",
+.date = @date("2022-03-12T00:00:00"),
+.author = "Jeroen",
+.layout = "index.shtml",
+.draft = false,
+--- 
+
+The information technology industry is experiencing unprecedented transformation across every domain. Programming languages are evolving to meet new paradigms, data systems are scaling to handle massive global workloads, and cloud infrastructure has fundamentally changed how we build and deploy applications. 
+
+Monitoring and automation tools are becoming increasingly sophisticated, while the gaming industry pushes the boundaries of both hardware capabilities and interactive experiences. 
+Operating systems are adapting to new computing models, artificial intelligence is reshaping entire sectors, and hardware innovations continue to drive performance breakthroughs.
+
+
+But step back and the picture shifts. The C programming language—still running critical infrastructure everywhere—was written in 1972. Unix, the philosophical grandfather of Linux and macOS, emerged in 1969. Even AI, despite all the current excitement, builds on neural network research from the 1940s and machine learning concepts that Alan Turing was exploring decades ago. We're not living through the invention of computing so much as its full realization. The seeds were planted long ago; we're just finally seeing the harvest.
+This convergence of rapid advancement across all technological fronts creates unique opportunities for innovation, disruption, and the emergence of entirely new industries we haven't yet imagined.

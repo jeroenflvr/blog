@@ -1,0 +1,403 @@
+---
+.title = "Rust Optimizations",
+.date = @date("2025-07-20T00:00:00"),
+.author = "Jeroen",
+.layout = "post.shtml",
+.draft = false,
+--- 
+
+# Squeezing Every Nanosecond: Optimizing Branch Prediction and Cache Performance in Rust
+
+When building high-performance systems in Rust, understanding how your code interacts with modern CPU architectures can mean the difference between "fast enough" and "blazingly fast." Two of the most critical factors affecting performance are branch prediction and cache behavior—areas where even small optimizations can yield significant speedups.
+
+Modern CPUs are marvels of engineering, executing billions of instructions per second through sophisticated techniques like speculative execution, out-of-order processing, and multi-level caching. However, these optimizations come with a caveat: they work best when your code follows predictable patterns that the hardware can anticipate.
+
+In this deep dive, we'll explore how to write Rust code that works harmoniously with your CPU's branch predictor and cache hierarchy. We'll cover practical techniques, provide real benchmarks, and show you how to measure the impact of your optimizations.
+
+## Understanding the Hardware: Why This Matters
+
+Before diving into techniques, let's establish why branch prediction and cache performance are crucial:
+
+**Branch Prediction**: Modern CPUs speculatively execute instructions before knowing if a branch will be taken. When the prediction is wrong, the CPU must discard work and restart—a costly operation that can stall execution for dozens of cycles.
+
+**Cache Performance**: Memory access patterns determine whether your data lives in fast CPU caches (L1/L2/L3) or slow main memory. Cache misses can be 100-300x slower than cache hits, making memory layout optimization critical for performance.
+
+## Branch Prediction Optimization
+
+### Technique 1: Providing Hints to the Compiler
+
+Rust provides intrinsics to hint at branch likelihood, helping the compiler generate better code:
+
+```rust
+use std::intrinsics::{likely, unlikely};
+
+fn process_data(data: &[i32]) -> i32 {
+    let mut sum = 0;
+    for &value in data {
+        if likely(value > 0) {
+            sum += value;
+        } else if unlikely(value < -1000) {
+            // Rare error case
+            eprintln!("Unexpected negative value: {}", value);
+        }
+    }
+    sum
+}
+```
+
+### Technique 2: Eliminating Branches with Branchless Code
+
+Sometimes the best branch is no branch at all:
+
+```rust
+// Branchy version
+fn clamp_positive_branchy(x: i32) -> i32 {
+    if x > 0 { x } else { 0 }
+}
+
+// Branchless version
+fn clamp_positive_branchless(x: i32) -> i32 {
+    x.max(0)
+}
+
+// Or for more complex conditions
+fn select_branchless(condition: bool, a: i32, b: i32) -> i32 {
+    // Compiler often optimizes this to conditional moves
+    if condition { a } else { b }
+}
+```
+
+### Technique 3: Restructuring Control Flow
+
+Replace unpredictable branches with more predictable patterns:
+
+```rust
+// Poor branch prediction due to random-looking pattern
+fn process_mixed_data_bad(data: &[i32]) -> (i32, i32) {
+    let mut positive_sum = 0;
+    let mut negative_sum = 0;
+    
+    for &value in data {
+        if value > 0 {
+            positive_sum += value;
+        } else {
+            negative_sum += value;
+        }
+    }
+    (positive_sum, negative_sum)
+}
+
+// Better: separate the data first, then process
+fn process_mixed_data_good(data: &[i32]) -> (i32, i32) {
+    let positive_sum: i32 = data.iter().filter(|&&x| x > 0).sum();
+    let negative_sum: i32 = data.iter().filter(|&&x| x <= 0).sum();
+    (positive_sum, negative_sum)
+}
+```
+
+## Cache Optimization Strategies
+
+### Structure of Arrays vs Array of Structures
+
+One of the most impactful optimizations involves reorganizing your data layout:
+
+```rust
+// Array of Structures (AoS) - poor cache locality
+#[derive(Clone)]
+struct ParticleAoS {
+    position: [f32; 3],
+    velocity: [f32; 3],
+    mass: f32,
+    charge: f32,
+}
+
+fn update_positions_aos(particles: &mut [ParticleAoS], dt: f32) {
+    for particle in particles {
+        particle.position[0] += particle.velocity[0] * dt;
+        particle.position[1] += particle.velocity[1] * dt;
+        particle.position[2] += particle.velocity[2] * dt;
+    }
+}
+
+// Structure of Arrays (SoA) - better cache locality
+struct ParticlesSoA {
+    positions: Vec<[f32; 3]>,
+    velocities: Vec<[f32; 3]>,
+    masses: Vec<f32>,
+    charges: Vec<f32>,
+}
+
+impl ParticlesSoA {
+    fn update_positions(&mut self, dt: f32) {
+        for (pos, vel) in self.positions.iter_mut().zip(&self.velocities) {
+            pos[0] += vel[0] * dt;
+            pos[1] += vel[1] * dt;
+            pos[2] += vel[2] * dt;
+        }
+    }
+}
+```
+
+### Memory Layout Optimization
+
+Careful struct design can significantly impact cache performance:
+
+```rust
+// Poor layout - lots of padding
+struct BadLayout {
+    flag: bool,     // 1 byte
+    // 7 bytes padding
+    big_num: u64,   // 8 bytes
+    small_num: u16, // 2 bytes
+    // 6 bytes padding
+}
+
+// Better layout - minimal padding
+#[repr(C)]
+struct GoodLayout {
+    big_num: u64,   // 8 bytes
+    small_num: u16, // 2 bytes
+    flag: bool,     // 1 byte
+    // 5 bytes padding (unavoidable due to alignment)
+}
+```
+
+### Cache-Friendly Algorithms
+
+Process data in patterns that maximize cache reuse:
+
+```rust
+// Cache-unfriendly: column-major access of row-major data
+fn sum_columns_bad(matrix: &[Vec<f32>]) -> Vec<f32> {
+    let cols = matrix[0].len();
+    let mut sums = vec![0.0; cols];
+    
+    for col in 0..cols {
+        for row in matrix {
+            sums[col] += row[col]; // Poor cache locality
+        }
+    }
+    sums
+}
+
+// Cache-friendly: row-major access
+fn sum_columns_good(matrix: &[Vec<f32>]) -> Vec<f32> {
+    let cols = matrix[0].len();
+    let mut sums = vec![0.0; cols];
+    
+    for row in matrix {
+        for (col, &value) in row.iter().enumerate() {
+            sums[col] += value; // Better cache locality
+        }
+    }
+    sums
+}
+```
+
+## Benchmarking and Profiling
+
+### Setting Up Benchmarks
+
+Here's how to measure the impact of your optimizations using the `criterion` crate:
+
+```rust
+// Cargo.toml
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "branch_prediction"
+harness = false
+```
+
+```rust
+// benches/branch_prediction.rs
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
+
+fn benchmark_branch_prediction(c: &mut Criterion) {
+    let data: Vec<i32> = (0..10000).map(|i| if i % 3 == 0 { -i } else { i }).collect();
+    
+    c.bench_function("branchy_clamp", |b| {
+        b.iter(|| {
+            let sum: i32 = data.iter()
+                .map(|&x| if x > 0 { x } else { 0 })
+                .sum();
+            black_box(sum)
+        })
+    });
+    
+    c.bench_function("branchless_clamp", |b| {
+        b.iter(|| {
+            let sum: i32 = data.iter()
+                .map(|&x| x.max(0))
+                .sum();
+            black_box(sum)
+        })
+    });
+}
+
+criterion_group!(benches, benchmark_branch_prediction);
+criterion_main!(benches);
+```
+
+### Cache Performance Benchmarks
+
+```rust
+// benches/cache_performance.rs
+use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
+
+const SIZES: &[usize] = &[1024, 4096, 16384, 65536, 262144];
+
+fn benchmark_cache_performance(c: &mut Criterion) {
+    let mut group = c.benchmark_group("cache_performance");
+    
+    for &size in SIZES {
+        let data: Vec<i32> = (0..size).map(|i| i as i32).collect();
+        
+        group.bench_with_input(BenchmarkId::new("sequential", size), &size, |b, &size| {
+            b.iter(|| {
+                let sum: i32 = data.iter().sum();
+                black_box(sum)
+            })
+        });
+        
+        group.bench_with_input(BenchmarkId::new("random", size), &size, |b, &size| {
+            use std::collections::hash_map::DefaultHasher;
+            use std::hash::{Hash, Hasher};
+            
+            b.iter(|| {
+                let mut sum = 0i32;
+                for i in 0..size {
+                    let mut hasher = DefaultHasher::new();
+                    i.hash(&mut hasher);
+                    let index = (hasher.finish() as usize) % size;
+                    sum += data[index];
+                }
+                black_box(sum)
+            })
+        });
+    }
+    
+    group.finish();
+}
+
+criterion_group!(benches, benchmark_cache_performance);
+criterion_main!(benches);
+```
+
+### System-Level Profiling
+
+Use `perf` (Linux) or `Instruments` (macOS) to get detailed CPU metrics:
+
+```bash
+# Build with optimizations and debug info
+cargo build --release
+
+# Profile branch prediction
+perf stat -e branches,branch-misses,branch-load-misses target/release/your_program
+
+# Profile cache performance
+perf stat -e cache-references,cache-misses,L1-dcache-loads,L1-dcache-load-misses target/release/your_program
+
+# Get detailed per-function breakdown
+perf record target/release/your_program
+perf report
+```
+
+### Interpreting Results
+
+Here's what to look for in your profiling results:
+
+- **Branch miss rate**: Should be under 5% for well-optimized code
+- **Cache miss rate**: Varies by workload, but under 10% is generally good
+- **Instructions per cycle (IPC)**: Higher is better; modern CPUs can achieve 2-4 IPC
+
+Example output interpretation:
+```
+Performance counter stats for './optimized_program':
+        45,234,567      branches                  #  451.23 M/sec
+         1,234,567      branch-misses             #    2.73% of all branches
+        12,345,678      cache-references          #  123.46 M/sec
+         1,234,567      cache-misses              #   10.00% of all cache refs
+```
+
+## Real-World Example: Optimizing a Hot Path
+
+Let's put it all together with a practical example—optimizing a simple image processing function:
+
+```rust
+// Before optimization
+fn apply_threshold_slow(image: &mut [u8], threshold: u8) {
+    for pixel in image {
+        if *pixel > threshold {
+            *pixel = 255;
+        } else {
+            *pixel = 0;
+        }
+    }
+}
+
+// After optimization
+fn apply_threshold_fast(image: &mut [u8], threshold: u8) {
+    // Process in chunks to improve cache locality
+    for chunk in image.chunks_mut(64) {
+        for pixel in chunk {
+            // Branchless threshold operation
+            *pixel = ((*pixel > threshold) as u8) * 255;
+        }
+    }
+}
+
+// Even better: using SIMD for data parallelism
+#[cfg(target_arch = "x86_64")]
+fn apply_threshold_simd(image: &mut [u8], threshold: u8) {
+    use std::arch::x86_64::*;
+    
+    let threshold_vec = unsafe { _mm256_set1_epi8(threshold as i8) };
+    let ones = unsafe { _mm256_set1_epi8(-1) }; // All 1s
+    
+    // Process 32 bytes at a time
+    for chunk in image.chunks_exact_mut(32) {
+        unsafe {
+            let pixels = _mm256_loadu_si256(chunk.as_ptr() as *const __m256i);
+            let mask = _mm256_cmpgt_epi8(pixels, threshold_vec);
+            let result = _mm256_and_si256(mask, ones);
+            _mm256_storeu_si256(chunk.as_mut_ptr() as *mut __m256i, result);
+        }
+    }
+    
+    // Handle remaining bytes
+    for pixel in image.chunks_exact_mut(32).into_remainder() {
+        *pixel = ((*pixel > threshold) as u8) * 255;
+    }
+}
+```
+
+## Best Practices and Guidelines
+
+### When to Optimize
+
+1. **Profile first**: Always measure before optimizing
+2. **Focus on hot paths**: Optimize the 10% of code that runs 90% of the time
+3. **Consider readability**: Micro-optimizations should be well-documented
+
+### Common Pitfalls
+
+1. **Premature optimization**: Don't sacrifice code clarity for unmeasured gains
+2. **Over-optimization**: Sometimes the compiler already generates optimal code
+3. **Ignoring context**: Optimizations that work in one scenario may hurt in another
+
+### Tools for Continuous Monitoring
+
+- **Criterion**: For micro-benchmarks and regression detection
+- **Flamegraph**: For identifying hot spots visually
+- **Valgrind/Cachegrind**: For detailed cache analysis
+- **Intel VTune**: For comprehensive CPU profiling (Intel CPUs)
+
+## Conclusion
+
+Optimizing branch prediction and cache performance in Rust requires a combination of understanding hardware behavior, careful code design, and rigorous measurement. The techniques covered in this post can lead to significant performance improvements, but remember that the most effective optimization is often the one that's measured and validated.
+
+Start with profiling to identify bottlenecks, apply the appropriate techniques, and always measure the results. Modern CPUs are incredibly sophisticated, and sometimes the best optimization is letting the hardware do what it does best while staying out of its way.
+
+The key is finding the balance between writing idiomatic Rust code and leveraging low-level optimizations where they truly matter. With careful application of these techniques, you can write Rust code that not only compiles to safe, fast machine code but also works harmoniously with modern CPU architectures to deliver exceptional performance.

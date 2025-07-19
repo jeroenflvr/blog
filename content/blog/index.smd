@@ -1,0 +1,20 @@
+---
+.title = "Blog",
+.date = @date("1990-01-01T00:00:00"),
+.author = "Jeroen",
+.layout = "blog.shtml",
+.alternatives = [{ 
+    .name = "rss",
+    .layout = "blog.xml", 
+    .output = "index.xml",
+}],
+.draft = false,
+--- 
+
+
+
+```rust
+fn main() -> Result<()>{
+    println!("awesome!");
+}
+```
