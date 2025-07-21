@@ -1,0 +1,34 @@
+---
+.title = "AWS S3 3rdparty compatibility stores broken",
+.date = @date("2025-05-30T00:00:00"),
+.author = "Jeroen",
+.layout = "post.shtml",
+.draft = false,
+--- 
+
+# Spark v4.0.0
+
+Spark 4.0.0 was released on 05/23, finally working with aws sdk v2 (v1 is slow).  This works with AWS, but fails with most of the s3 3rdparty compatibility stores.
+However, this is not related to v2 of the aws sdk, but everything with how they changed their [default integrity protection](https://docs.aws.amazon.com/sdkref/latest/guide/feature-dataintegrity.html).
+
+[hadoop issue HADOOP-19490 | S3A: AWS SDK 2.30+ incompatible with third party stores](https://issues.apache.org/jira/browse/HADOOP-19490)
+
+https://github.com/aws/aws-sdk-java-v2/issues/5801
+
+Just pin to bundle-2.29.52.jar for now.
+
+tried:
+
+
+# Python
+
+Same issue with Python, however you have options besides pinning to a specific version.
+
+https://github.com/aws/aws-cli/issues/9214
+
+```bash
+export AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED
+export AWS_RESPONSE_CHECKSUM_CALCULATION=WHEN_REQUIRED
+```
+
+done.

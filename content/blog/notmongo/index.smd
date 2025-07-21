@@ -12,12 +12,12 @@
 >
 
 ## What?
-I'm discovering how DuckDB works internally. I've been using it mainly for ad hoc stuff with the excellent cli.
+DuckDB is fast, light-weight, highly compatible, easy to use... I've been using it mainly for ad hoc stuff with the excellent cli.
 Also, I have a few use cases for accessing json data from api's.  Some are very simple, others are similar to MongoDB.
 
 I could have used the already excellent [json](https://duckdb.org/docs/extensions/json) extension
 with an external data fetcher, or even the [shellfs](https://community-extensions.duckdb.org/extensions/shellfs.html) 
-extension with curl.  Actually, that's how i do it today, use curl and pipe into the read_json /dev/stdin source.
+extension with curl.  Actually, that's how i do it today, use curl, maybe preconfig with jq, and pipe into the read_json /dev/stdin source.
 However, when I'm in the cli, I want to stay there.  Especially when I'm running multiple consecutive queries for joins etc.
 
 ## Why this site?
