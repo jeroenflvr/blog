@@ -12,7 +12,7 @@ When building high-performance systems in Rust, understanding how the code inter
 
 Modern CPUs are marvels of engineering, executing billions of instructions per second through sophisticated techniques like speculative execution, out-of-order processing, and multi-level caching. However, these optimizations come with a caveat: they work best when the code follows predictable patterns that the hardware can anticipate.
 
-In this deep dive, we'll explore how to write Rust code that works harmoniously with the CPU's branch predictor and cache hierarchy. We'll cover practical techniques, provide real benchmarks, and show you how to measure the impact of the optimizations.
+Here, we'll explore how to write Rust code that works harmoniously with the CPU's branch predictor and cache hierarchy. We'll have a look at several practical techniques, provide real benchmarks, and illustrate how to measure the impact of the optimizations.
 
 ## Understanding the Hardware: Why This Matters
 
@@ -198,6 +198,8 @@ fn sum_columns_good(matrix: &[Vec<f32>]) -> Vec<f32> {
 
 ### Setting Up Benchmarks
 
+Using [black_box](https://doc.rust-lang.org/beta/std/hint/fn.black_box.html):  "An identity function that hints to the compiler to be maximally pessimistic about what black_box could do."
+
 Here's how to measure the impact of the optimizations using the `criterion` crate:
 
 ```rust
@@ -212,7 +214,8 @@ harness = false
 
 ```rust
 // benches/branch_prediction.rs
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use std::hint::black_box; 
+use criterion::{criterion_group, criterion_main, Criterion};
 
 fn benchmark_branch_prediction(c: &mut Criterion) {
     let data: Vec<i32> = (0..10000).map(|i| if i % 3 == 0 { -i } else { i }).collect();
@@ -244,7 +247,8 @@ criterion_main!(benches);
 
 ```rust
 // benches/cache_performance.rs
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
+use std::hint::black_box;
+use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId};
 
 const SIZES: &[usize] = &[1024, 4096, 16384, 65536, 262144];
 
