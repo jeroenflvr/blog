@@ -1,0 +1,52 @@
+---
+.title = "esp32c6 (and c3) - my new favorite microcontrollers PART 1",
+.date = @date("2025-12-30T00:00:00"),
+.author = "Jeroen",
+.layout = "post.shtml",
+.draft = true,
+--- 
+
+
+># [Warning]($block.attrs('warning'))
+> Draft
+>
+
+## What?
+The esp32, and in particular the Xiao Seeed [esp32c6](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/) (and [esp32c3](https://wiki.seeedstudio.com/XIAO_ESP32C3_Getting_Started/)) are small, versatile and fast microcontrollers.  
+It's a RISC-V processor with:
+    - wifi/bluetooth/zigbee/thread/matter
+    - all the interfaces one could possibly need: I2C/UART/SPI/GPIO/ADC/...
+    - battery charging circuit (100ma)
+    - sleep and deep sleep mode (down to ~15μA !!)
+
+
+## Why this device?
+I've used it for a plethora of projects:
+- mobile thermometer (using bme280): 
+    uses deep sleep and wakes up every hour to send data to influxdb
+- electronic dice (using msa311 triple-axis accellerometer)
+    using i2c for msa311 and oled display
+- remote power switch for my ASUS Z10Pe-D16 workstation (connected to StandBy power)
+- LED strip controller with web interface
+- Analog interface for a raspberry pi to measure power consumption using SCT-013 30A sensors
+- remote scale to weigh gastanks using load cells
+- Lithium-ion and lipo battery charger (esp32c3 has higher load current)
+- wireless light switch over wifi for a room where the bed is in the only corner without lightswitches
+- car proximity detection for smart driveway lights
+- ...
+
+
+## Where to start
+- Xiao Seeed website for [esp32c6](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/)
+- Great online web interface to explore the device: [ESPConnect](https://thelastoutpostworkshop.github.io/ESPConnect/) 
+- Starterkit in C (under construction)
+- Starterkit in Rust (under construction)
+
+
+To be continued ..
+
+___
+
+```=html
+<div align="right" style="color: orange; font-size: 0.6rem;"> jeroenflvr</div>
+```
