@@ -1,0 +1,297 @@
+---
+.title = "Intermediate variables with Java",
+.date = @date("2025-12-31T00:00:00"),
+.author = "Jeroen",
+.layout = "post.shtml",
+.draft = false,
+--- 
+
+Have you ever avoided using an intermediate variable because you thought it would hurt performance? 
+
+
+## The Question
+
+My colleague asked if the following is identical or if there was a performance penalty when using intermediate variables.
+
+```java
+// Version 1: Using an intermediate variable
+public double berekenOmtrek(double lengte, double breedte) {
+    double x;
+    x = 2 * (lengte + breedte);
+    return x;
+}
+
+// Version 2: Direct return
+public double berekenOmtrek(double lengte, double breedte) {
+    return 2 * (lengte + breedte);
+}
+```
+
+The question seemed simple: **Do these compile to the same machine code?** 
+
+At first glance, Version 1 seems wasteful—we're storing a value in a variable just to immediately return it.
+
+## The Bytecode Evidence: They ARE Different
+
+Let's start by examining what the Java compiler (`javac`) produces. Using `javap -c`, we can see the bytecode:
+
+([compiler explorer](https://godbolt.org/z/r6af763GW))
+
+### Version 1 (with intermediate variable):
+```asm
+0: dload_1          // load parameter 1 (lengte)
+1: dload_3          // load parameter 2 (breedte)
+2: dadd             // add them
+3: ldc2_w #2        // load constant 2.0
+6: dmul             // multiply
+7: dstore 5         // ← STORE to local variable 'x'
+9: dload 5          // ← LOAD from local variable 'x'
+11: dreturn         // return
+```
+
+### Version 2 (direct return):
+```asm
+0: dload_1          // load parameter 1 (lengte)
+1: dload_3          // load parameter 2 (breedte)
+2: dadd             // add them
+3: ldc2_w #2        // load constant 2.0
+6: dmul             // multiply
+7: dreturn          // ← DIRECT return
+```
+
+**The verdict:** Version 1 has **two extra bytecode instructions** (`dstore` and `dload`). The Java compiler doesn't optimize away the intermediate variable at compile-time.
+
+In languages like c and rust, this gets optimized by the compiler using -O2 or -O3 flags.
+
+ie in C, using -O2 compiler flag ([Compiler Explorer](https://godbolt.org/z/8YcEn91ch))
+```c
+double square(double num) {
+    double d = num * num;
+    return d;
+}
+
+double square_n(double num) {
+    return num * num;
+}
+```
+
+results in 
+```asm
+square:
+        mulsd   xmm0, xmm0
+        ret
+square_n:
+        mulsd   xmm0, xmm0
+        ret
+```
+
+without compiler optimization flags, the extra steps also remain => always use optimization flags for production!
+
+```asm
+square:
+        push    rbp
+        mov     rbp, rsp
+        movsd   QWORD PTR [rbp-24], xmm0
+        movsd   xmm0, QWORD PTR [rbp-24]
+        mulsd   xmm0, xmm0
+        movsd   QWORD PTR [rbp-8], xmm0
+        movsd   xmm0, QWORD PTR [rbp-8]
+        pop     rbp
+        ret
+square_n:
+        push    rbp
+        mov     rbp, rsp
+        movsd   QWORD PTR [rbp-8], xmm0
+        movsd   xmm0, QWORD PTR [rbp-8]
+        mulsd   xmm0, xmm0
+        pop     rbp
+        ret
+```
+
+
+So for Java, version 2 is faster? 
+
+**hang on, there's more...**
+
+## Understanding the JVM's Secret Weapon: JIT Compilation
+
+Here's where it gets interesting. The bytecode you see above is **not** what your CPU actually executes. When your Java program runs, the JVM's Just-In-Time (JIT) compiler watches for "hot" methods—code that runs frequently. Once a method crosses a threshold (typically around 10,000 invocations), the JIT compiler kicks in and compiles that bytecode to native machine code with aggressive optimizations.
+
+The C2 compiler (the JVM's optimizing JIT compiler) performs several sophisticated transformations:
+- **Dead code elimination** - Removes code that has no effect
+- **Common subexpression elimination** - Avoids redundant calculations  
+- **Register allocation** - Keeps values in CPU registers instead of memory
+- **Inlining** - Embeds small methods directly into callers
+- **Escape analysis** - Determines if objects can stay on the stack
+
+And crucially: **Dead store elimination** - Removes stores to variables that are only read once.
+
+## The  Proof
+
+To see what actually runs on your CPU, we need to look at the code. Using the HotSpot disassembler (hsdis), I compiled both methods with the JIT compiler and examined the output.
+
+### On ARM64 (Apple Silicon):
+
+**Version 1 (with intermediate variable):**
+```asm
+fadd  d0, d0, d1         ; Add lengte + breedte
+fadd  d0, d0, d0         ; Multiply by 2 (add to itself)
+ret                      ; Return
+```
+
+**Version 2 (direct return):**
+```asm
+fadd  d0, d0, d1         ; Add lengte + breedte
+fadd  d0, d0, d0         ; Multiply by 2 (add to itself)
+ret                      ; Return
+```
+
+### On x86-64 (Intel/AMD):
+
+**Version 1 (with intermediate variable):**
+```asm
+vaddsd  xmm0, xmm0, xmm1    ; Add lengte + breedte
+vaddsd  xmm0, xmm0, xmm0    ; Multiply by 2
+ret                         ; Return
+```
+
+**Version 2 (direct return):**
+```asm
+vaddsd  xmm0, xmm0, xmm1    ; Add lengte + breedte
+vaddsd  xmm0, xmm0, xmm0    ; Multiply by 2
+ret                         ; Return
+```
+
+**They're identical.** The extra `dstore`/`dload` bytecode instructions have completely vanished. The intermediate variable `x` never actually exists in the final machine code.
+
+## The Performance Test
+
+I was expecting to be able to measure performance by timing execution of the first and the second, a few billion runs of each, but I noticed there's a lot more to this with Java compared to Ahead-of-Time compiled languages.
+With JIT and JVM, benchmarking Java deserves a topic of its own, so watch this space.
+
+
+## How the Optimization Works
+
+When the JIT compiler analyzes Version 1, it performs **data flow analysis** and recognizes this pattern:
+
+```
+value computed → stored to variable → loaded from variable → returned
+```
+
+It applies **dead store elimination**, transforming it to:
+
+```
+value computed → returned
+```
+
+The intermediate variable `x` is a "dead store"—it's written once and read once, with no other uses. The JIT compiler recognizes this and eliminates it entirely. The calculated value simply stays in a CPU register (like `xmm0` on x86 or `d0` on ARM) throughout the operation.
+
+## Why This Matters for Software Development
+
+This discovery has important implications for how we write code:
+
+### 1. **Readability Trumps Micro-optimizations**
+
+Don't avoid intermediate variables for performance reasons. If naming a value makes your code clearer, do it:
+
+```java
+// More readable
+public double calculateTotalPrice(double basePrice, double taxRate) {
+    double priceWithTax = basePrice * (1 + taxRate);
+    return priceWithTax;
+}
+
+// Less readable (but no faster!)
+public double calculateTotalPrice(double basePrice, double taxRate) {
+    return basePrice * (1 + taxRate);
+}
+```
+
+After JIT compilation, these are identical.
+
+### 2. **Trust the JIT**
+
+The JVM has been optimized by some of the brightest minds in computing for over 25 years. The JIT compiler often produces better code than manual "optimizations." Focus on writing clean, maintainable code—the JVM will handle the performance.
+
+### 3. **Optimize Algorithms, Not Syntax**
+
+Instead of worrying about intermediate variables, focus on:
+- Choosing the right data structures (HashMap vs TreeMap)
+- Reducing algorithmic complexity (O(n²) → O(n log n))
+- Minimizing allocations in hot loops
+- Using appropriate concurrency patterns
+
+These have orders of magnitude more impact than saving a local variable.
+
+### 4. **When Bytecode Size Matters**
+
+There are rare cases where bytecode size matters (e.g., for method inlining thresholds), but for 99.9% of code, this is irrelevant. The JIT compiler inlines methods based on actual execution patterns, not just bytecode size.
+
+## The Bigger Picture
+
+The levels of abstraction in modern systems are there for a reason:
+
+```
+Source Code (what you write)
+    ↓ javac
+Bytecode (portable intermediate form)
+    ↓ JIT compiler
+Machine Code (what the CPU executes)
+```
+
+Each layer has different goals:
+- **javac**: Produce correct, debuggable bytecode
+- **JIT**: Produce fast, optimized machine code
+
+By separating these concerns, you get the best of both worlds: readable source code AND fast execution.
+
+## How to Test This Yourself
+
+Want to see the assembly code yourself? Here's how:
+
+1. **Download hsdis** (HotSpot Disassembler):
+   - Visit: https://chriswhocodes.com/hsdis/
+   - Download the appropriate version for your platform
+
+2. **Install it** in your JDK:
+   ```
+   <JAVA_HOME>/lib/server/hsdis-<platform>.dylib
+   ```
+
+3. **Add JVM flags**:
+   ```
+   -XX:+UnlockDiagnosticVMOptions 
+   -XX:+PrintAssembly 
+   -XX:CompileCommand=print,YourClass.yourMethod
+   ```
+
+4. **Run your code** and search the output for your method name.
+
+The assembly output can be overwhelming, but searching for your method name will show you exactly what the CPU executes.
+
+## Conclusion
+
+What started as a simple question—"Do these compile to the same machine code?"—led to a fascinating journey through the layers of Java execution. We discovered that:
+
+1. ✅ **Bytecode differs** - The Java compiler keeps intermediate variables
+2. ✅ **Machine code is identical** - The JIT compiler optimizes them away
+3. ⬜ Performance is identical - Empirical testing should and has to confirm it (coming soon)
+4. ✅ **Write readable code** - Trust the JIT to optimize
+
+---
+
+**Key Takeaway:** Modern compilers and runtimes are incredibly sophisticated. The best optimization you can make is to write clear, understandable code. Leave the micro-optimizations to the machines—they're better at it anyway.
+
+
+---
+
+## References & Further Reading
+
+- [OpenJDK JIT Compiler Documentation](https://wiki.openjdk.org/display/HotSpot/Overview)
+- [Java Performance: The Definitive Guide](https://www.oreilly.com/library/view/java-performance-the/9781449363512/) by Scott Oaks
+- [JITWatch](https://github.com/AdoptOpenJDK/jitwatch) - GUI tool for analyzing JIT compilation
+- [HotSpot Glossary](https://openjdk.org/groups/hotspot/docs/HotSpotGlossary.html)
+
+---
+
+*All tests were performed on OpenJDK 21 with default JVM settings. Assembly output may vary based on CPU architecture, JVM version, and optimization settings.*

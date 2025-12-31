@@ -227,3 +227,90 @@ code.c .qualifier,
 code.c .attribute {
   color: var(--light-red);
 }
+
+code.asm {
+  color: var(--cyan);
+}
+
+code.asm .keyword,
+code.asm .instruction {
+  color: var(--light-yellow);
+}
+
+code.asm .string {
+  color: var(--dark-yellow);
+}
+
+code.asm .numeric.constant,
+code.asm .number {
+  color: var(--magenta);
+}
+
+code.asm .register {
+  color: var(--light-red);
+}
+
+code.asm .label {
+  color: var(--blue);
+}
+
+code.asm .directive {
+  color: var(--magenta);
+}
+
+code.asm .comment {
+  color: var(--comment-gray);
+  font-style: italic;
+}
+
+code.asm .operator {
+  color: var(--cyan);
+}
+
+code.java {
+  color: var(--cyan);
+}
+
+code.java .keyword,
+code.java .type {
+  color: var(--light-yellow);
+}
+
+code.java .string {
+  color: var(--dark-yellow);
+}
+
+code.java .numeric.constant,
+code.java .number {
+  color: var(--magenta);
+}
+
+code.java .function,
+code.java .method {
+  color: var(--blue);
+}
+
+code.java .annotation {
+  color: var(--magenta);
+}
+
+code.java .comment {
+  color: var(--comment-gray);
+  font-style: italic;
+}
+
+code.java .class {
+  color: var(--light-yellow);
+}
+
+code.java .interface {
+  color: var(--cyan);
+}
+
+code.java .operator {
+  color: var(--cyan);
+}
+
+code.java .modifier {
+  color: var(--light-red);
+}
