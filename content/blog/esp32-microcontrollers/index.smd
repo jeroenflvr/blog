@@ -41,7 +41,7 @@ I've used it for a plethora of projects:
 ## Where to start
 - Xiao Seeed website for [esp32c6](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/)
 - Great online web interface to explore the device: [ESPConnect](https://thelastoutpostworkshop.github.io/ESPConnect/) 
-- [Starterkit in C](https://github.com/jeroenflvr/esp32-starter-c) (under construction)
+- [Starterkit in C on github](https://github.com/jeroenflvr/esp32-starter-c) (under construction)
     - ✅ with provisioning for wifi using wifi Access Point mode
     - example implementations for 
         - ⬜ reading battery voltage using voltage divider (ADC)
