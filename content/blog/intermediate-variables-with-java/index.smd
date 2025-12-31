@@ -45,7 +45,7 @@ Let's start by examining what the Java compiler (`javac`) produces. Using `javap
 0: dload_1          // load parameter 1 (lengte)
 1: dload_3          // load parameter 2 (breedte)
 2: dadd             // add them
-3: ldc2_w #2        // load constant 2.0
+3: ldc2_w #2        // load double
 6: dmul             // multiply
 7: dstore 5         // ← STORE to local variable 'x'
 9: dload 5          // ← LOAD from local variable 'x'
@@ -57,7 +57,7 @@ Let's start by examining what the Java compiler (`javac`) produces. Using `javap
 0: dload_1          // load parameter 1 (lengte)
 1: dload_3          // load parameter 2 (breedte)
 2: dadd             // add them
-3: ldc2_w #2        // load constant 2.0
+3: ldc2_w #2        // load double
 6: dmul             // multiply
 7: dreturn          // ← DIRECT return
 ```
