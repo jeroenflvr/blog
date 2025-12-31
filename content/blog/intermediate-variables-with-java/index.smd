@@ -11,7 +11,10 @@ Have you ever avoided using an intermediate variable because you thought it woul
 
 ## The Question
 
+
+
 My colleague asked if the following is identical or if there was a performance penalty when using intermediate variables.
+ _-- Thank you Nicky for the inspiration --_
 
 ```java
 // Version 1: Using an intermediate variable
