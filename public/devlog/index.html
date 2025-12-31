@@ -2,7 +2,9 @@
 <html>
   <head id="head">
     <meta charset="utf-8">
-    <meta name="viewport" content="initial-scale=1">
+    <meta name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <!-- <meta name="viewport" content="initial-scale=1"> -->
     <title>The Generalist&apos;s Plex</title>
     <link type="text/css" rel="stylesheet" href="/style.css">
     <link type="text/css" rel="stylesheet" href="/highlight.css">
@@ -28,13 +30,13 @@
     <nav>
       <a href="/">Home</a>
        &nbsp; • &nbsp;
-      <a href="/about/">About</a>
-       &nbsp; • &nbsp;
+      <!-- <a href="$site.page('about').link()">About</a>
+       &nbsp; • &nbsp; -->
       <a href="/blog/">Blog</a>
-      
+      <!-- <ctx :if="$site.page('devlog').subpages().first?()">
          &nbsp; • &nbsp;
-        <a href="/devlog/1990/">Devlog</a>
-      
+        <a href="$if.link()">Devlog</a>
+      </ctx> -->
     </nav>
     
   <h1>Devlog Archive</h1>

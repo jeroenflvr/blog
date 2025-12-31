@@ -2,7 +2,9 @@
 <html>
   <head id="head">
     <meta charset="utf-8">
-    <meta name="viewport" content="initial-scale=1">
+    <meta name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <!-- <meta name="viewport" content="initial-scale=1"> -->
     <title>The Generalist&apos;s Plex</title>
     <link type="text/css" rel="stylesheet" href="/style.css">
     <link type="text/css" rel="stylesheet" href="/highlight.css">
@@ -28,27 +30,48 @@
     <nav>
       <a href="/">Home</a>
        &nbsp; • &nbsp;
-      <a href="/about/">About</a>
-       &nbsp; • &nbsp;
+      <!-- <a href="$site.page('about').link()">About</a>
+       &nbsp; • &nbsp; -->
       <a href="/blog/">Blog</a>
-      
+      <!-- <ctx :if="$site.page('devlog').subpages().first?()">
          &nbsp; • &nbsp;
-        <a href="/devlog/1990/">Devlog</a>
-      
+        <a href="$if.link()">Devlog</a>
+      </ctx> -->
     </nav>
     
   <h1>Blog</h1>
   <div><pre><code class="rust"><span class="keyword">fn</span> <span class="constructor constant function">main</span><span class="punctuation_bracket">(</span><span class="punctuation_bracket">)</span> -&gt; <span class="type">Result</span><span class="punctuation_bracket">&lt;</span>(<span class="punctuation_bracket">)</span><span class="punctuation_bracket">&gt;</span><span class="punctuation_bracket">{</span>
-    <span class="constructor function_macro constant">println</span><span class="function_macro">!</span><span class="punctuation_bracket">(</span><span class="string">&quot;awesome!&quot;</span><span class="punctuation_bracket">)</span><span class="punctuation_delimiter">;</span>
+    <span class="constructor function_macro constant">println</span><span class="function_macro">!</span><span class="punctuation_bracket">(</span><span class="string">&quot;Awesome, you&apos;re here! Welcome.&quot;</span><span class="punctuation_bracket">)</span><span class="punctuation_delimiter">;</span>
+    <span class="constructor constant function">Ok</span><span class="punctuation_bracket">(</span><span class="punctuation_bracket">(</span><span class="punctuation_bracket">)</span><span class="punctuation_bracket">)</span>
 <span class="punctuation_bracket">}</span>
 </code></pre>
 </div>
   <div>
     <h2>Post list</h2>
     <div>
-      <span class="date">July 20, 2025</span>
+      <span class="date">December 30, 2025</span>
+      <a class="title" href="/blog/esp32-microcontrollers/">
+        <h3>esp32c6 (and c3) - my new favorite microcontrollers PART 1</h3>
+      </a>
+    
+      <span class="date">July 19, 2025</span>
+      <a class="title" href="/blog/in-process-reverse-proxy/">
+        <h3>In-Process Reverse Proxy</h3>
+      </a>
+    
+      <span class="date">June 13, 2025</span>
       <a class="title" href="/blog/rust-optimizations/">
         <h3>Rust Optimizations</h3>
+      </a>
+    
+      <span class="date">May 30, 2025</span>
+      <a class="title" href="/blog/aws-s3-3rdparty-stores-broken/">
+        <h3>AWS S3 3rdparty compatibility stores broken TLDR;</h3>
+      </a>
+    
+      <span class="date">March 13, 2022</span>
+      <a class="title" href="/blog/notmongo/">
+        <h3>NotMongo</h3>
       </a>
     </div>
   </div>

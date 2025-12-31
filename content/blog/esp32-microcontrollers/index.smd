@@ -3,7 +3,7 @@
 .date = @date("2025-12-30T00:00:00"),
 .author = "Jeroen",
 .layout = "post.shtml",
-.draft = true,
+.draft = false,
 --- 
 
 
@@ -14,10 +14,11 @@
 ## What?
 The esp32, and in particular the Xiao Seeed [esp32c6](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/) (and [esp32c3](https://wiki.seeedstudio.com/XIAO_ESP32C3_Getting_Started/)) are small, versatile and fast microcontrollers.  
 It's a RISC-V processor with:
-    - wifi/bluetooth/zigbee/thread/matter
-    - all the interfaces one could possibly need: I2C/UART/SPI/GPIO/ADC/...
-    - battery charging circuit (100ma)
-    - sleep and deep sleep mode (down to ~15μA !!)
+
+- wifi/bluetooth/zigbee/thread/matter
+- all the interfaces one could possibly need: I2C/UART/SPI/GPIO/ADC/...
+- battery charging circuit (100ma)
+- sleep and deep sleep mode (down to ~15μA !!)
 
 
 ## Why this device?
@@ -29,10 +30,11 @@ I've used it for a plethora of projects:
 - remote power switch for my ASUS Z10Pe-D16 workstation (connected to StandBy power)
 - LED strip controller with web interface
 - Analog interface for a raspberry pi to measure power consumption using SCT-013 30A sensors
-- remote scale to weigh gastanks using load cells
+- remote scale to weigh gastanks using 4 50kg load cells in wheatstone bridge config
 - Lithium-ion and lipo battery charger (esp32c3 has higher load current)
 - wireless light switch over wifi for a room where the bed is in the only corner without lightswitches
-- car proximity detection for smart driveway lights
+- car proximity detection using BLE for smart driveway lights
+- home thermostat controller with relay, to replace the stupidly annoying BTicino BTL4441, as part of the home temperature system (zones, ..)
 - ...
 
 
@@ -40,10 +42,18 @@ I've used it for a plethora of projects:
 - Xiao Seeed website for [esp32c6](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/)
 - Great online web interface to explore the device: [ESPConnect](https://thelastoutpostworkshop.github.io/ESPConnect/) 
 - Starterkit in C (under construction)
+    - with provisioning for wifi
+    - example implementations for 
+        - reading battery voltage using voltage divider (ADC)
+        - i2c sensor
+        - spi sensor
+        - UART sensor
+        - ...
 - Starterkit in Rust (under construction)
 
 
-To be continued ..
+
+I'll post links to the github repos of each project later. To be continued ..
 
 ___
 

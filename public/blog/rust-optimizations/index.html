@@ -2,7 +2,9 @@
 <html>
   <head id="head">
     <meta charset="utf-8">
-    <meta name="viewport" content="initial-scale=1">
+    <meta name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <!-- <meta name="viewport" content="initial-scale=1"> -->
     <title>The Generalist&apos;s Plex</title>
     <link type="text/css" rel="stylesheet" href="/style.css">
     <link type="text/css" rel="stylesheet" href="/highlight.css">
@@ -38,17 +40,17 @@
     <nav>
       <a href="/">Home</a>
        &nbsp; • &nbsp;
-      <a href="/about/">About</a>
-       &nbsp; • &nbsp;
+      <!-- <a href="$site.page('about').link()">About</a>
+       &nbsp; • &nbsp; -->
       <a href="/blog/">Blog</a>
-      
+      <!-- <ctx :if="$site.page('devlog').subpages().first?()">
          &nbsp; • &nbsp;
-        <a href="/devlog/1990/">Devlog</a>
-      
+        <a href="$if.link()">Devlog</a>
+      </ctx> -->
     </nav>
     
   <h1>Rust Optimizations</h1>
-  <div class="post"><h1>Squeezing Every Nanosecond: Optimizing Branch Prediction and Cache Performance in Rust</h1><p>When building high-performance systems in Rust, understanding how your code interacts with modern CPU architectures can mean the difference between “fast enough” and “blazingly fast.” Two of the most critical factors affecting performance are branch prediction and cache behavior—areas where even small optimizations can yield significant speedups.</p><p>Modern CPUs are marvels of engineering, executing billions of instructions per second through sophisticated techniques like speculative execution, out-of-order processing, and multi-level caching. However, these optimizations come with a caveat: they work best when your code follows predictable patterns that the hardware can anticipate.</p><p>In this deep dive, we’ll explore how to write Rust code that works harmoniously with your CPU’s branch predictor and cache hierarchy. We’ll cover practical techniques, provide real benchmarks, and show you how to measure the impact of your optimizations.</p><h2>Understanding the Hardware: Why This Matters</h2><p>Before diving into techniques, let’s establish why branch prediction and cache performance are crucial:</p><p><strong>Branch Prediction</strong>: Modern CPUs speculatively execute instructions before knowing if a branch will be taken. When the prediction is wrong, the CPU must discard work and restart—a costly operation that can stall execution for dozens of cycles.</p><p><strong>Cache Performance</strong>: Memory access patterns determine whether your data lives in fast CPU caches (L1/L2/L3) or slow main memory. Cache misses can be 100-300x slower than cache hits, making memory layout optimization critical for performance.</p><h2>Branch Prediction Optimization</h2><h3>Technique 1: Providing Hints to the Compiler</h3><p>Rust provides intrinsics to hint at branch likelihood, helping the compiler generate better code:</p><pre><code class="rust"><span class="keyword">use</span> <span class="constructor constant type">std</span><span class="punctuation_delimiter">::</span><span class="constructor constant">intrinsics</span><span class="punctuation_delimiter">::</span><span class="punctuation_bracket">{</span><span class="constructor constant">likely</span><span class="punctuation_delimiter">,</span> <span class="constructor constant">unlikely</span><span class="punctuation_bracket">}</span><span class="punctuation_delimiter">;</span>
+  <div class="post"><h1>Squeezing Every Nanosecond: Optimizing Branch Prediction and Cache Performance in Rust</h1><p>When building high-performance systems in Rust, understanding how the code interacts with modern CPU architectures can mean the difference between “fast enough” and “blazingly fast.” Two of the most critical factors affecting performance are branch prediction and cache behavior—areas where even small optimizations can yield significant speedups.</p><p>Modern CPUs are marvels of engineering, executing billions of instructions per second through sophisticated techniques like speculative execution, out-of-order processing, and multi-level caching. However, these optimizations come with a caveat: they work best when the code follows predictable patterns that the hardware can anticipate.</p><p>Here, we’ll explore how to write Rust code that works harmoniously with the CPU’s branch predictor and cache hierarchy. We’ll have a look at several practical techniques, provide real benchmarks, and illustrate how to measure the impact of the optimizations.</p><h2>Understanding the Hardware: Why This Matters</h2><p>Before diving into techniques, let’s establish why branch prediction and cache performance are crucial:</p><p><strong>Branch Prediction</strong>: Modern CPUs speculatively execute instructions before knowing if a branch will be taken. When the prediction is wrong, the CPU must discard work and restart—a costly operation that can stall execution for dozens of cycles.</p><p><strong>Cache Performance</strong>: Memory access patterns determine whether the data lives in fast CPU caches (L1/L2/L3) or slow main memory. Cache misses can be 100-300x slower than cache hits, making memory layout optimization critical for performance.</p><h2>Branch Prediction Optimization</h2><h3>Technique 1: Providing Hints to the Compiler</h3><p>Rust provides intrinsics to hint at branch likelihood, helping the compiler generate better code:</p><pre><code class="rust"><span class="keyword">use</span> <span class="constructor constant type">std</span><span class="punctuation_delimiter">::</span><span class="constructor constant">intrinsics</span><span class="punctuation_delimiter">::</span><span class="punctuation_bracket">{</span><span class="constructor constant">likely</span><span class="punctuation_delimiter">,</span> <span class="constructor constant">unlikely</span><span class="punctuation_bracket">}</span><span class="punctuation_delimiter">;</span>
 
 <span class="keyword">fn</span> <span class="constructor constant function">process_data</span><span class="punctuation_bracket">(</span><span class="constructor constant variable_parameter">data</span><span class="punctuation_delimiter">:</span> <span class="operator">&amp;</span><span class="punctuation_bracket">[</span><span class="type_builtin">i32</span><span class="punctuation_bracket">]</span><span class="punctuation_bracket">)</span> -&gt; <span class="type_builtin">i32</span> <span class="punctuation_bracket">{</span>
     <span class="keyword">let</span> <span class="keyword">mut</span> <span class="constructor constant">sum</span> = <span class="constant_builtin">0</span><span class="punctuation_delimiter">;</span>
@@ -101,7 +103,7 @@
     <span class="punctuation_bracket">(</span><span class="constructor constant">positive_sum</span><span class="punctuation_delimiter">,</span> <span class="constructor constant">negative_sum</span><span class="punctuation_bracket">)</span>
 <span class="punctuation_bracket">}</span>
 </code></pre>
-<h2>Cache Optimization Strategies</h2><h3>Structure of Arrays vs Array of Structures</h3><p>One of the most impactful optimizations involves reorganizing your data layout:</p><pre><code class="rust"><span class="comment">// Array of Structures (AoS) - poor cache locality</span>
+<h2>Cache Optimization Strategies</h2><h3>Structure of Arrays vs Array of Structures</h3><p>One of the most impactful optimizations involves reorganizing the data layout:</p><pre><code class="rust"><span class="comment">// Array of Structures (AoS) - poor cache locality</span>
 <span class="attribute">#</span><span class="punctuation_bracket attribute">[</span><span class="constructor constant attribute">derive</span><span class="punctuation_bracket attribute">(</span><span class="constructor constant attribute">Clone</span><span class="punctuation_bracket attribute">)</span><span class="punctuation_bracket attribute">]</span>
 <span class="keyword">struct</span> <span class="type">ParticleAoS</span> <span class="punctuation_bracket">{</span>
     <span class="property">position</span><span class="punctuation_delimiter">:</span> <span class="punctuation_bracket">[</span><span class="type_builtin">f32</span><span class="punctuation_delimiter">;</span> <span class="constant_builtin">3</span><span class="punctuation_bracket">]</span><span class="punctuation_delimiter">,</span>
@@ -180,7 +182,7 @@
     <span class="constructor constant">sums</span>
 <span class="punctuation_bracket">}</span>
 </code></pre>
-<h2>Benchmarking and Profiling</h2><h3>Setting Up Benchmarks</h3><p>Here’s how to measure the impact of your optimizations using the <code>criterion</code> crate:</p><pre><code class="rust"><span class="comment">// Cargo.toml</span>
+<h2>Benchmarking and Profiling</h2><h3>Setting Up Benchmarks</h3><p>Using <a href="https://doc.rust-lang.org/beta/std/hint/fn.black_box.html" target="_blank">black_box</a>:  “An identity function that hints to the compiler to be maximally pessimistic about what black_box could do.”</p><p>Here’s how to measure the impact of the optimizations using the <code>criterion</code> crate:</p><pre><code class="rust"><span class="comment">// Cargo.toml</span>
 <span class="punctuation_bracket">[</span><span class="constructor constant">dev</span>-<span class="constructor constant">dependencies</span><span class="punctuation_bracket">]</span>
 <span class="constructor constant">criterion</span> = <span class="string">&quot;0.5&quot;</span>
 
@@ -189,7 +191,8 @@
 <span class="constructor constant">harness</span> = <span class="constant_builtin">false</span>
 </code></pre>
 <pre><code class="rust"><span class="comment">// benches/branch_prediction.rs</span>
-<span class="keyword">use</span> <span class="constructor constant">criterion</span><span class="punctuation_delimiter">::</span><span class="punctuation_bracket">{</span><span class="constructor constant">black_box</span><span class="punctuation_delimiter">,</span> <span class="constructor constant">criterion_group</span><span class="punctuation_delimiter">,</span> <span class="constructor constant">criterion_main</span><span class="punctuation_delimiter">,</span> <span class="constructor constant">Criterion</span><span class="punctuation_bracket">}</span><span class="punctuation_delimiter">;</span>
+<span class="keyword">use</span> <span class="constructor constant type">std</span><span class="punctuation_delimiter">::</span><span class="constructor constant type">hint</span><span class="punctuation_delimiter">::</span><span class="constructor constant">black_box</span><span class="punctuation_delimiter">;</span> 
+<span class="keyword">use</span> <span class="constructor constant">criterion</span><span class="punctuation_delimiter">::</span><span class="punctuation_bracket">{</span><span class="constructor constant">criterion_group</span><span class="punctuation_delimiter">,</span> <span class="constructor constant">criterion_main</span><span class="punctuation_delimiter">,</span> <span class="constructor constant">Criterion</span><span class="punctuation_bracket">}</span><span class="punctuation_delimiter">;</span>
 
 <span class="keyword">fn</span> <span class="constructor constant function">benchmark_branch_prediction</span><span class="punctuation_bracket">(</span><span class="constructor constant variable_parameter">c</span><span class="punctuation_delimiter">:</span> <span class="operator">&amp;</span><span class="keyword">mut</span> <span class="type">Criterion</span><span class="punctuation_bracket">)</span> <span class="punctuation_bracket">{</span>
     <span class="keyword">let</span> <span class="constructor constant">data</span><span class="punctuation_delimiter">:</span> <span class="type">Vec</span><span class="punctuation_bracket">&lt;</span><span class="type_builtin">i32</span><span class="punctuation_bracket">&gt;</span> = <span class="punctuation_bracket">(</span><span class="constant_builtin">0</span>..<span class="constant_builtin">10000</span><span class="punctuation_bracket">)</span><span class="punctuation_delimiter">.</span><span class="property function_method">map</span><span class="punctuation_bracket">(</span>|<span class="constructor constant">i</span>| <span class="keyword">if</span> <span class="constructor constant">i</span> % <span class="constant_builtin">3</span> == <span class="constant_builtin">0</span> <span class="punctuation_bracket">{</span> -<span class="constructor constant">i</span> <span class="punctuation_bracket">}</span> <span class="keyword">else</span> <span class="punctuation_bracket">{</span> <span class="constructor constant">i</span> <span class="punctuation_bracket">}</span><span class="punctuation_bracket">)</span><span class="punctuation_delimiter">.</span><span class="property function_method">collect</span><span class="punctuation_bracket">(</span><span class="punctuation_bracket">)</span><span class="punctuation_delimiter">;</span>
@@ -217,7 +220,8 @@
 <span class="constructor function_macro constant">criterion_main</span><span class="function_macro">!</span><span class="punctuation_bracket">(</span><span class="constructor constant">benches</span><span class="punctuation_bracket">)</span><span class="punctuation_delimiter">;</span>
 </code></pre>
 <h3>Cache Performance Benchmarks</h3><pre><code class="rust"><span class="comment">// benches/cache_performance.rs</span>
-<span class="keyword">use</span> <span class="constructor constant">criterion</span><span class="punctuation_delimiter">::</span><span class="punctuation_bracket">{</span><span class="constructor constant">black_box</span><span class="punctuation_delimiter">,</span> <span class="constructor constant">criterion_group</span><span class="punctuation_delimiter">,</span> <span class="constructor constant">criterion_main</span><span class="punctuation_delimiter">,</span> <span class="constructor constant">Criterion</span><span class="punctuation_delimiter">,</span> <span class="constructor constant">BenchmarkId</span><span class="punctuation_bracket">}</span><span class="punctuation_delimiter">;</span>
+<span class="keyword">use</span> <span class="constructor constant type">std</span><span class="punctuation_delimiter">::</span><span class="constructor constant type">hint</span><span class="punctuation_delimiter">::</span><span class="constructor constant">black_box</span><span class="punctuation_delimiter">;</span>
+<span class="keyword">use</span> <span class="constructor constant">criterion</span><span class="punctuation_delimiter">::</span><span class="punctuation_bracket">{</span><span class="constructor constant">criterion_group</span><span class="punctuation_delimiter">,</span> <span class="constructor constant">criterion_main</span><span class="punctuation_delimiter">,</span> <span class="constructor constant">Criterion</span><span class="punctuation_delimiter">,</span> <span class="constructor constant">BenchmarkId</span><span class="punctuation_bracket">}</span><span class="punctuation_delimiter">;</span>
 
 <span class="keyword">const</span> <span class="constructor constant">SIZES</span><span class="punctuation_delimiter">:</span> <span class="operator">&amp;</span><span class="punctuation_bracket">[</span><span class="type_builtin">usize</span><span class="punctuation_bracket">]</span> = <span class="operator">&amp;</span><span class="punctuation_bracket">[</span><span class="constant_builtin">1024</span><span class="punctuation_delimiter">,</span> <span class="constant_builtin">4096</span><span class="punctuation_delimiter">,</span> <span class="constant_builtin">16384</span><span class="punctuation_delimiter">,</span> <span class="constant_builtin">65536</span><span class="punctuation_delimiter">,</span> <span class="constant_builtin">262144</span><span class="punctuation_bracket">]</span><span class="punctuation_delimiter">;</span>
 
@@ -270,7 +274,7 @@
 <span class="constant function">perf</span> <span class="constant">record</span> <span class="constant">target/release/your_program</span>
 <span class="constant function">perf</span> <span class="constant">report</span>
 </code></pre>
-<h3>Interpreting Results</h3><p>Here’s what to look for in your profiling results:</p><ul><li><strong>Branch miss rate</strong>: Should be under 5% for well-optimized code</li><li><strong>Cache miss rate</strong>: Varies by workload, but under 10% is generally good</li><li><strong>Instructions per cycle (IPC)</strong>: Higher is better; modern CPUs can achieve 2-4 IPC</li></ul><p>Example output interpretation:</p><pre><code>Performance counter stats for &apos;./optimized_program&apos;:
+<h3>Interpreting Results</h3><p>Here’s what to look for in the profiling results:</p><ul><li><strong>Branch miss rate</strong>: Should be under 5% for well-optimized code</li><li><strong>Cache miss rate</strong>: Varies by workload, but under 10% is generally good</li><li><strong>Instructions per cycle (IPC)</strong>: Higher is better; modern CPUs can achieve 2-4 IPC</li></ul><p>Example output interpretation:</p><pre><code>Performance counter stats for &apos;./optimized_program&apos;:
         45,234,567      branches                  #  451.23 M/sec
          1,234,567      branch-misses             #    2.73% of all branches
         12,345,678      cache-references          #  123.46 M/sec
@@ -323,8 +327,18 @@
 </code></pre>
 <h2>Best Practices and Guidelines</h2><h3>When to Optimize</h3><ol><li><strong>Profile first</strong>: Always measure before optimizing</li><li><strong>Focus on hot paths</strong>: Optimize the 10% of code that runs 90% of the time</li><li><strong>Consider readability</strong>: Micro-optimizations should be well-documented</li></ol><h3>Common Pitfalls</h3><ol><li><strong>Premature optimization</strong>: Don’t sacrifice code clarity for unmeasured gains</li><li><strong>Over-optimization</strong>: Sometimes the compiler already generates optimal code</li><li><strong>Ignoring context</strong>: Optimizations that work in one scenario may hurt in another</li></ol><h3>Tools for Continuous Monitoring</h3><ul><li><strong>Criterion</strong>: For micro-benchmarks and regression detection</li><li><strong>Flamegraph</strong>: For identifying hot spots visually</li><li><strong>Valgrind/Cachegrind</strong>: For detailed cache analysis</li><li><strong>Intel VTune</strong>: For comprehensive CPU profiling (Intel CPUs)</li></ul><h2>Conclusion</h2><p>Optimizing branch prediction and cache performance in Rust requires a combination of understanding hardware behavior, careful code design, and rigorous measurement. The techniques covered in this post can lead to significant performance improvements, but remember that the most effective optimization is often the one that’s measured and validated.</p><p>Start with profiling to identify bottlenecks, apply the appropriate techniques, and always measure the results. Modern CPUs are incredibly sophisticated, and sometimes the best optimization is letting the hardware do what it does best while staying out of its way.</p><p>The key is finding the balance between writing idiomatic Rust code and leveraging low-level optimizations where they truly matter. With careful application of these techniques, you can write Rust code that not only compiles to safe, fast machine code but also works harmoniously with modern CPU architectures to deliver exceptional performance.</p></div>
   <div id="prev-next">
-    <div></div>
-    <div></div>
+    <div>
+      <a href="/blog/aws-s3-3rdparty-stores-broken/">
+        ←
+        <span>AWS S3 3rdparty compatibility stores broken TLDR;</span>
+      </a>
+    </div>
+    <div>
+      <a href="/blog/in-process-reverse-proxy/">
+        <span>In-Process Reverse Proxy</span>
+        →
+      </a>
+    </div>
   </div>
 
     <footer>
