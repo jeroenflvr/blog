@@ -41,13 +41,15 @@ I've used it for a plethora of projects:
 ## Where to start
 - Xiao Seeed website for [esp32c6](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/)
 - Great online web interface to explore the device: [ESPConnect](https://thelastoutpostworkshop.github.io/ESPConnect/) 
-- Starterkit in C (under construction)
-    - with provisioning for wifi
+- [Starterkit in C](https://github.com/jeroenflvr/esp32-starter-c) (under construction)
+    - [x] with provisioning for wifi using wifi Access Point mode
     - example implementations for 
-        - reading battery voltage using voltage divider (ADC)
-        - i2c sensor
-        - spi sensor
-        - UART sensor
+        - [ ] reading battery voltage using voltage divider (ADC)
+        - [ ] i2c sensor
+        - [ ] spi sensor
+        - [ ] UART sensor
+        - [x] webserver
+        - [x] ntp time sync and uptime keeping 
         - ...
 - Starterkit in Rust (under construction)
 
