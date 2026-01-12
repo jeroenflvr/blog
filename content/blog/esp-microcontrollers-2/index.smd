@@ -9,7 +9,7 @@
 
 ## Back to C
 
-So I have been working on a smart gastank level device, a remote lightswitch, a few portable temperature probes, and a few other projects, power consumption became really important. Sometimes for convenience, sometimes because of necessity.
+So I have been working on a smart gastank level device, a remote lightswitch, several portable temperature probes, and a few other projects.  Power consumption became really important. Sometimes for convenience, sometimes because of necessity.
 First step to conserve battery is to use deep sleep.  Next was to look for a wireless networking protocol with better battery efficiency. 
 
 First issue I ran into was with deep sleep.  I couldn't get the device into deep sleep using Rust.  Actually, it's a little more complicated, the real problem was the combination of using wifi and deep sleep.
