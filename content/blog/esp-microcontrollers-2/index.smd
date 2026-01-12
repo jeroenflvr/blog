@@ -1,0 +1,35 @@
+---
+.title = "esp32c6 (and c3) - my new favorite microcontroller PART 2",
+.date = @date("2026-01-10T00:00:00"),
+.author = "Jeroen",
+.layout = "post.shtml",
+.draft = false,
+--- 
+
+
+## Back to C
+
+So I have been working on a smart gastank level device, a remote lightswitch, a few portable temperature probes, and a few other projects, power consumption became really important. Sometimes for convenience, sometimes because of necessity.
+First step to conserve battery is to use deep sleep.  Next was to look for a wireless networking protocol with better battery efficiency. 
+
+First issue I ran into was with deep sleep.  I couldn't get the device into deep sleep using Rust.  Actually, it's a little more complicated, the real problem was the combination of using wifi and deep sleep.
+I did spend some time on this and after a while, I started having doubts about the device.  I couldn't get the device into deep sleep after having enabled wifi, or even without wifi.  I wanted to test with another device because maybe this one had an issue.
+Unfortunately, I didn't have another device available to test with.  Another option was to quickly bootstrap a C project with minimal functionality, focussing on deep sleep.  
+Bootstrapping in C was easy and quick.  Deep sleep worked right off the bat.  Added Wifi, issued an HTTP POST json request with uptime, device name and device internal temperature, went back to deep sleep ... Bingo! Still works.
+
+I noted to revert to Rust and check out the API and the deep sleep implementation, but for now, for this, I stuck to C.
+
+For another project I wanted to use a more power efficient networking protocol: Thread.  Same problem:  couldn't get it to work with Rust.  Since I already had a C project, I quickly spun up a copy and added Thread support.  Same success.  Works.
+
+For now, I'll stay in this happy place, but I __will__ go back to Rust.  I've shot myself too many times in the foot and Rust might not avoid functional and logic mistakes, but at least it helps with these weird and hard to troubleshoot memory bugs.
+Also, I like the comfort of the cargo framework.  Easy.  Dependencies and supply chain issues aside, I still like it.
+
+Maybe I should have a look at [zig](https://microzig.tech/) again for this ..
+
+
+
+___
+
+```=html
+<div align="right" style="color: orange; font-size: 0.6rem;"> jeroenflvr</div>
+```

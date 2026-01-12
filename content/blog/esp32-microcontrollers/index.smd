@@ -1,5 +1,5 @@
 ---
-.title = "esp32c6 (and c3) - my new favorite microcontrollers PART 1",
+.title = "esp32c6 (and c3) - my new favorite microcontroller PART 1",
 .date = @date("2025-12-30T00:00:00"),
 .author = "Jeroen",
 .layout = "post.shtml",
@@ -22,6 +22,16 @@ It's a RISC-V processor with:
 
 
 ## Why this device?
+
+### Compatibility
+
+I've been using Rust for practically everything and wanted a device that had good compatibility. 
+So there's [The Rust on ESP Book ](https://docs.espressif.com/projects/rust/book/).
+
+The ESP-IDF (IoT Development Framework) is primarily written in C and has great support for C++.  So there are options.
+
+### Capability
+
 I've used it for a plethora of projects:
 - mobile thermometer (using bme280): 
     uses deep sleep and wakes up every hour to send data to influxdb
@@ -32,10 +42,15 @@ I've used it for a plethora of projects:
 - Analog interface for a raspberry pi to measure power consumption using SCT-013 30A sensors
 - remote scale to weigh gastanks using 4 50kg load cells in wheatstone bridge config
 - Lithium-ion and lipo battery charger (esp32c3 has higher load current)
-- wireless light switch over wifi for a room where the bed is in the only corner without lightswitches
+- wireless light switch over [Thread](https://www.threadgroup.org/What-is-Thread/Overview) for a room where the bed is in the only corner without lightswitches. 
 - car proximity detection using BLE for smart driveway lights
 - home thermostat controller with relay, to replace the stupidly annoying BTicino BTL4441, as part of the home temperature system (zones, ..)
 - ...
+
+### Availability
+
+The device is available through different sources at decent prices.
+
 
 
 ## Where to start
@@ -53,9 +68,14 @@ I've used it for a plethora of projects:
         - ...
 - Starterkit in Rust (under construction)
 
+## Some alternatives considered
+- Raspberry Pi Pico 2W
+- stm32
+- ATtiny
 
 
 I'll post links to the github repos of each project later. To be continued ..
+
 
 ___
 
