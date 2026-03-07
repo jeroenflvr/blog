@@ -1,0 +1,105 @@
+---
+.title = "Chromium Google Sync Setup (ARM64 Linux)",
+.date = @date("2026-03-07T00:00:00"),
+.author = "Jeroen",
+.layout = "post.shtml",
+.draft = false,
+--- 
+
+## Introduction
+
+There's no google chrome on arm64 linux (ie. Asahi, Raspberry Pi). Chromium doesn't sync anymore with Google.
+
+## Prerequisites
+
+You need a Google account and access to Google Cloud Console. All steps should use the **same Google account** you want to sync with.
+
+---
+
+## Step 1: Join Google Groups
+
+Join both of these groups with your Google account:
+
+- [chromium-dev](https://groups.google.com/a/chromium.org/forum/#!forum/chromium-dev) — you can set it to no email notifications
+- [google-browser-signin-testaccounts](https://groups.google.com/u/0/a/chromium.org/g/google-browser-signin-testaccounts) — it will appear empty/private, that's normal, just join
+
+> These group memberships are required for the Chrome Sync API to work with your account.
+
+---
+
+## Step 2: Set Up Google Cloud Credentials
+
+1. Go to [console.cloud.google.com](https://console.cloud.google.com)
+2. Create a new project (or use an existing one)
+3. Go to **APIs & Services > Library**, search for **Chrome Sync API** and enable it
+4. Go to **APIs & Services > Credentials**
+
+### OAuth Client ID & Secret
+
+1. Click **Create Credentials > OAuth client ID**
+2. If prompted, set up the consent screen first:
+   - Choose **External**
+   - Fill in an app name (e.g. "chromium-sync") and your email
+   - Skip all other optional fields
+3. For application type, choose **TVs and Limited Input devices** or **Desktop app**
+4. Copy the **Client ID** and **Client Secret**
+
+### API Key (optional)
+
+An API key is not strictly required for sync to work. If you want one:
+
+1. Click **Create Credentials > API Key**
+2. Copy the generated key (starts with `AIza...`)
+3. No special restrictions need to be set
+
+---
+
+## Step 3: Configure Environment Variables
+
+Create a systemd environment config file so the variables persist across reboots:
+
+```bash
+mkdir -p ~/.config/environment.d
+nano ~/.config/environment.d/chromium-sync.conf
+```
+
+Add the following (API key line is optional, so just __skip it__):
+
+```
+GOOGLE_DEFAULT_CLIENT_ID=your_client_id_here
+GOOGLE_DEFAULT_CLIENT_SECRET=your_client_secret_here
+GOOGLE_API_KEY=your_api_key_here
+```
+
+Save the file and reboot (or log out and back in).
+
+---
+
+## Step 4: Verify & Sign In
+
+After rebooting, verify the variables are set:
+
+```bash
+printenv | grep -i google
+```
+
+You should see your variables listed. Then launch Chromium — a **"Turn on sync"** button should appear in the top right. Click it and sign in with your Google account.
+
+> **Note:** It can take up to a few hours after enabling the Chrome Sync API in Google Cloud before it fully works. If sign-in fails initially, wait and try again.
+
+---
+
+## Troubleshooting
+
+**No "Turn on sync" button appearing**
+- Check that your environment variables are set correctly with `printenv | grep -i google`
+- Make sure the file is saved as `*.conf` inside `~/.config/environment.d/`
+- Try rebooting rather than just logging out
+
+**"Cannot turn Sync On for invalid account" error**
+- Make sure you joined both Google Groups with the same account you're syncing with
+- Wait a few hours for group membership to propagate and try again
+
+**Sync button appears but fails after login**
+- Double-check that the Chrome Sync API is enabled in your Google Cloud project
+- Make sure you are logged into Google Cloud with the same account as the Google Groups
